@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <cpuid.h>
 #include "cpuid.h"
 #include "cpufeat.h"
 
-static void cpu_vendor(void)
+static void cpu_vendor(int all_aligned)
 {
     unsigned int reg[4];
     char buf[13];
@@ -19,13 +18,18 @@ static void cpu_vendor(void)
 
     buf[12] = '\0';
 
-    fprintf(stdout, "CPU Vendor: %s\n", buf);
+    if (all_aligned)
+        PRINT_CPU_VENDOR(buf, TABS3)
+    else
+        PRINT_CPU_VENDOR(buf, TABS0)
 }
 
 static void cpu_supported_extensions(void)
 {
     unsigned int reg[4];
     unsigned int eax0, eax1;
+
+    cpu_vendor(1);
 
     __cpuid(0, reg[0], reg[1], reg[2], reg[3]);
     eax0 = reg[0]; /* Temporary keep first eax */
@@ -40,7 +44,6 @@ static void cpu_supported_extensions(void)
         CHECK_AND_PRINT(reg[3], BIT_SSE, "SSE", TABS4);
         CHECK_AND_PRINT(reg[3], BIT_SSE2, "SSE2", TABS4);
         CHECK_AND_PRINT(reg[3], BIT_SSE3, "SSE2", TABS4);
-        // TODO: Add support for SSSE3 in nixfetch
         CHECK_AND_PRINT(reg[2], BIT_SSSE3, "SSSE3", TABS4);
         CHECK_AND_PRINT(reg[2], BIT_SSE2, "SSE4.1", TABS4);
         CHECK_AND_PRINT(reg[2], BIT_SSE2, "SSE4.2", TABS4);
@@ -123,13 +126,13 @@ int main(int argc, char **argv)
     }
 
     if (strcmp(argv[1], "--vendor") == 0)
-        cpu_vendor();
+        cpu_vendor(0);
     else if (strcmp(argv[1], "--features") == 0)
         cpu_supported_extensions();
     else if (strcmp(argv[1], "--help") == 0)
         help();
     else
-        fprintf(stdout, "Unknown command: %s", argv[1]);
+        fprintf(stdout, "Unknown command: %s\n", argv[1]);
 
     exit(EXIT_SUCCESS);
 }
